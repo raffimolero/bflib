@@ -1,13 +1,5 @@
 from bf import *
 
-# res = add(-4) + cond_preserve(
-#     1, 2,
-#     bf_print('Hello', True, -1),
-#     bf_print('World!', True, 0),
-# )
-
-RIGHT = LEFT = ADD = SUB = OPEN = CLOSE = OUT = IN = ""
-
 
 def op(operation: str):
     return f"""
@@ -22,10 +14,26 @@ RIGHT = op(">>")
 LEFT = op("<<")
 ADD = op("+")
 SUB = op("-")
-OPEN = f'>{puts("OPEN")}>>>-'
-CLOSE = f'>{puts("CLOSE")}>>>-'
+OPEN = f"""
+    ->>[->>]<
+    <->[<+ (
+        +[<<+] TRUE
+        {puts('TRUE\n')}
+        >-----
+    ) ]<[+ (
+        +[<<+] FALSE seek
+        {puts('FALSE\n')}
+        >-----<
+    ) ]
+    {puts('OPEN')}
+    >+++++
+    >-
+"""
+CLOSE = f'{puts("CLOSE")}>>-'
 OUT = op(".")
 IN = op(",")
+
+
 # at this point, pointer is at the previous instruction
 # +1 to the last free space
 # +3 to the nearest marker
@@ -55,7 +63,7 @@ res = f"""
         <
     )]
     >
-    +[<<+] seek to instruction pointer
+    +[<<+]
     >[(
         {clone_to(-1, -3)}
         {move(-1)}
@@ -70,7 +78,3 @@ res = f"""
 
 """
 print(bf_format(res))
-
-
-# res = add(20) + clone_to(1, 3, (2, 5)) * MotionFactor(-2)
-# print(bf_format(res))
