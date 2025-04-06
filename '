@@ -1,0 +1,55 @@
+class Indent:
+    depth: int
+
+    def __init__(self, depth: int):
+        self.depth = depth
+    
+    def __rmul__(self, lhs: str):
+        s = lhs
+        lines = list(s.splitlines())
+        if len(lines) <= 1:
+            return s
+        dedent = len(lines[-1])
+        return '\n'.join('    ' * self.depth + line[dedent:] for line in lines[1:-1])
+
+
+def cond(
+    valCond: int,
+    posFlag: int,
+    posZeroed: int,
+    actTrue: str,
+    actFalse: str,
+):
+    assert posZeroed == posFlag * 2
+    return f"""
+        {'-' * valCond}[{'>' * posFlag * 2}-
+            {actTrue * Indent(1)}
+        {'<' * posFlag}]{'>' * posFlag}+[-
+            {actFalse * Indent(1)}
+        {'>' * posFlag}]{'<' * posFlag}{'<' * posFlag}{'+' * valCond}
+        """
+
+def add(amount: int):
+    if amount > 0:
+        return '+' * amount
+    if amount < 0:
+        return '-' * -amount
+    return ''
+
+def bfprint(text: str, current_val: int = 0, preserve: bool = False):
+    out = ''
+    for c in text:
+        target_val = ord(c)
+        out += add(target_val - current_val)
+        out += '.\n'
+        current_val = target_val
+    if preserve:
+        out += add(-current_val) + '\n'
+    return out
+
+res = cond(
+    4, 1, 2,
+    bfprint('Hello'),
+    bfprint('World!') * Indent(1),
+) * Indent(0)
+print(res)
