@@ -223,21 +223,25 @@ def bf_format(text: str, indent: str = '  '):
 #     bf_print('Hello', True, -1),
 #     bf_print('World!', True, 0),
 # )
-res = ',[ (' + switch(
-    3,
-    {
-        '!': puts('bang'),
-        '<': puts('left'),
-        '>': puts('right'),
-        '+': puts('plus'),
-        '-': puts('minus'),
-        ',': puts('comma'),
-        '.': puts('dot'),
-        '[': puts('open'),
-        ']': puts('close'),
-    },
-    reset() + puts('default')
-) + ') ,]'
+res = f"""
+    ,[ (
+        {switch(
+            3,
+            {
+                '!': puts('bang'),
+                '<': puts('left'),
+                '>': puts('right'),
+                '+': puts('plus'),
+                '-': puts('minus'),
+                ',': puts('comma'),
+                '.': puts('dot'),
+                '[': puts('open'),
+                ']': puts('close'),
+            },
+            reset() + puts('default')
+        )}
+    ) ,]
+"""
 print(bf_format(res))
 
 
