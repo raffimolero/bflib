@@ -8,20 +8,24 @@ from bf import *
 
 RIGHT = LEFT = ADD = SUB = OPEN = CLOSE = OUT = IN = ""
 
-RIGHT = f"""
-    ->>[->>]
-    +[<<+]
-    >>
-    -
-"""
-LEFT = f"""
-    ->>[->>]
-    <<<<
-    +[<<+]
-    >>
-    -
-"""
 
+def op(operation: str):
+    return f"""
+        ->>[->>]< (
+            {operation}
+        ) <
+        +[<<+]>>-
+    """
+
+
+RIGHT = op(">>")
+LEFT = op("<<")
+ADD = op("+")
+SUB = op("-")
+OPEN = f'>{puts("OPEN")}>>>-'
+CLOSE = f'>{puts("CLOSE")}>>>-'
+OUT = op(".")
+IN = op(",")
 # at this point, pointer is at the previous instruction
 # +1 to the last free space
 # +3 to the nearest marker
