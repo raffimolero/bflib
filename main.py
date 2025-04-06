@@ -5,11 +5,42 @@ from bf import *
 #     bf_print('Hello', True, -1),
 #     bf_print('World!', True, 0),
 # )
+
+RIGHT = LEFT = ADD = SUB = OPEN = CLOSE = OUT = IN = ""
+
+RIGHT = f"""
+    ->>[->>]
+    +[<<+]
+    >>
+    -
+"""
+LEFT = f"""
+    ->>[->>]
+    <<<<
+    +[<<+]
+    >>
+    -
+"""
+
+# at this point, pointer is at the previous instruction
+# +1 to the last free space
+# +3 to the nearest marker
+INSTRUCTIONS = {
+    1: RIGHT,
+    2: LEFT,
+    3: ADD,
+    4: SUB,
+    5: OPEN,
+    6: CLOSE,
+    7: OUT,
+    8: IN,
+}
+
 res = f"""
     {move(8)}
     -
     >+
-    [
+    [(
         >>
         >,
         {switch(
@@ -18,29 +49,20 @@ res = f"""
             reset() + '<<'
         )}
         <
-    ]
+    )]
     >
     +[<<+] seek to instruction pointer
-    >[
+    >[(
         {clone_to(-1, -3)}
         {move(-1)}
         {clone_to(1)}
         {move(-2)}
         {switch(
             2,
-            {
-                1: puts('right'),
-                2: puts('left'),
-                3: puts('add'),
-                4: puts('sub'),
-                5: puts('open'),
-                6: puts('close'),
-                7: puts('out'),
-                8: puts('in'),
-            }
+            INSTRUCTIONS
         )}
-        {move(5)}
-    ]
+        {move(3)}
+    )]
 
 """
 print(bf_format(res))

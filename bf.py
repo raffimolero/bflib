@@ -2,8 +2,9 @@ import traceback
 import re
 import math
 
-BF = '[]+-,.<>'
-BF = ''.join(f'\\{c}' for c in BF)
+BF = "[]+-,.<>"
+BF = "".join(f"\\{c}" for c in BF)
+
 
 class MotionFactor:
     """
@@ -14,12 +15,13 @@ class MotionFactor:
     def __init__(self, factor: int):
         self.factor = factor
         self.translation = {
-            ord('<'): move(-self.factor),
-            ord('>'): move(self.factor),
+            ord("<"): move(-self.factor),
+            ord(">"): move(self.factor),
         }
 
     def __rmul__(self, lhs: str):
         return lhs.translate(self.translation)
+
 
 def _wrap(amount: int):
     """
@@ -27,55 +29,61 @@ def _wrap(amount: int):
     """
     return (amount + 128) % 256 - 128
 
+
 def _char_or_int(val: str | int):
     if isinstance(val, int):
         return val
     if isinstance(val, str) and len(val) == 1:
         return ord(val)
-    raise 'non integer value passed to _int converter'
+    raise "non integer value passed to _int converter"
 
 
 def move(amount: int):
     amount = _wrap(amount)
     if amount > 0:
-        return '>' * amount
+        return ">" * amount
     if amount < 0:
-        return '<' * -amount
-    return ''
+        return "<" * -amount
+    return ""
+
 
 def add(amount: int):
     amount = _wrap(amount)
     if amount > 0:
-        return '+' * amount
+        return "+" * amount
     if amount < 0:
-        return '-' * -amount
-    return ''
+        return "-" * -amount
+    return ""
+
 
 def clone_to(*args):
     """
     desc:
         clones the current cell to a set of other specific locations, possibly with a multiplier.
-    
+
     example:
         before: (@N 0 0   0)
         {clone_to(1, 3, (2, 5))}
         after:  (@0 N N*5 N)
     """
-    out = '[- ('
+    out = "[- ("
     current_pos = 0
+
     def normalize(item):
         match item:
             case pos, mul:
                 return pos, mul
             case pos:
                 return pos, 1
+
     args = sorted(map(normalize, args))
     for target_pos, target_factor in args:
         out += move(target_pos - current_pos)
-        out += add(target_factor) + '\n'
+        out += add(target_factor) + "\n"
         current_pos = target_pos
-    out += move(0 - current_pos) + '\n'
-    return out + ') ]'
+    out += move(0 - current_pos) + "\n"
+    return out + ") ]"
+
 
 def reset(amount: int = 0):
     """
@@ -85,7 +93,8 @@ def reset(amount: int = 0):
     before: (@?)
     after:  (@amount)
     """
-    return '[-]' + add(amount)
+    return "[-]" + add(amount)
+
 
 def puts(text: str, preserve: bool = True, starting_val: int = 0):
     """
@@ -96,16 +105,17 @@ def puts(text: str, preserve: bool = True, starting_val: int = 0):
     before: (@starting_val)
     after:  (@starting_val) if preserve else (@?)
     """
-    out = ''
+    out = ""
     current_val = starting_val
     for c in text:
         target_val = ord(c)
         out += add(target_val - current_val)
-        out += '.\n'
+        out += ".\n"
         current_val = target_val
     if preserve:
-        out += add(starting_val - current_val) + '\n'
+        out += add(starting_val - current_val) + "\n"
     return out
+
 
 def cond_preserve(
     posFlagFalse: int,
@@ -119,7 +129,7 @@ def cond_preserve(
         modifications to X are actually allowed and will be preserved (labeled Y).
 
     before: (@X 0 0)
-    if X != 0: 
+    if X != 0:
         before: (X @0 0)
         {actTrue}
         after:  (Y @? 0)
@@ -140,6 +150,7 @@ def cond_preserve(
         ) {r}]{l}{l}
     """
 
+
 def switch(
     posFlag: int,
     cases: dict[str | int, str],
@@ -148,7 +159,7 @@ def switch(
     """
     desc:
         consuming switch case.
-    
+
     before: (@X 0)
     case X:
         before: (0 @0)
@@ -164,48 +175,52 @@ def switch(
     r = move(posFlag)
     l = move(-posFlag)
 
-    out = f'{r}+{l}'
+    out = f"{r}+{l}"
 
     items = sorted((_char_or_int(k), v) for k, v in cases.items())
 
-    out += '('
+    out += "("
     cur = 0
     for k, _ in items:
-        out += f'{add(cur - k)}[\n'
+        out += f"{add(cur - k)}[\n"
         cur = k
-    out += ')'
-    
+    out += ")"
+
     out += f"""
         {r}-{l} (
             {default}
         ) ]==
     """.strip()
-    
-    out += f'{l}]'.join(f"""
+
+    out += f"{l}]".join(
+        f"""
         {r}[- (
             {v}
         ) ]
-    """.strip() for _, v in reversed(items))
+    """.strip()
+        for _, v in reversed(items)
+    )
 
     return out + l
 
-def bf_format(text: str, indent: str = '  '):
+
+def bf_format(text: str, indent: str = "    "):
     """
     formats code based on parentheses
     """
-    out = ''
+    out = ""
     empty_line = True
     depth = 0
     for c in text:
-        if c == ' ':
+        if c == " ":
             continue
-        if c == '(':
+        if c == "(":
             depth += 1
-            c = '\n'
-        if c == ')':
+            c = "\n"
+        if c == ")":
             depth -= 1
-            c = '\n'
-        if c == '\n':
+            c = "\n"
+        if c == "\n":
             if empty_line:
                 continue
             empty_line = True
@@ -216,4 +231,3 @@ def bf_format(text: str, indent: str = '  '):
             empty_line = False
         out += c
     return out
-
