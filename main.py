@@ -27,6 +27,14 @@ def _wrap(amount: int):
     """
     return (amount + 128) % 256 - 128
 
+def _char_or_int(val: str | int):
+    if isinstance(val, int):
+        return val
+    if isinstance(val, str) and len(val) == 1:
+        return ord(val)
+    raise 'non integer value passed to _int converter'
+
+
 def move(amount: int):
     amount = _wrap(amount)
     if amount > 0:
@@ -53,7 +61,7 @@ def clone_to(*args):
         {clone_to(1, 3, (2, 5))}
         after:  (@0 N N*5 N)
     """
-    out = '[-(\n'
+    out = '[- ('
     current_pos = 0
     def normalize(item):
         match item:
@@ -67,9 +75,9 @@ def clone_to(*args):
         out += add(target_factor) + '\n'
         current_pos = target_pos
     out += move(0 - current_pos) + '\n'
-    return out + ')]'
+    return out + ') ]'
 
-def set(amount: int = 0):
+def reset(amount: int = 0):
     """
     desc:
         sets the current cell to a specified amount.
@@ -79,7 +87,7 @@ def set(amount: int = 0):
     """
     return '[-]' + add(amount)
 
-def bf_print(text: str, starting_val: int = 0, preserve: bool = False):
+def puts(text: str, preserve: bool = True, starting_val: int = 0):
     """
     desc:
         prints out some text using one cell. not very efficient but gets the job done.
@@ -122,13 +130,64 @@ def cond_preserve(
     after:  (@Y ? 0)
     """
     assert posFlagFalse * 2 == posFlagTrue
+    r = move(posFlagFalse)
+    l = move(-posFlagFalse)
     return f"""
-        [{move(posFlagFalse * 2)}- (
+        [{r}{r}- (
             {actTrue}
-        ) {move(-posFlagFalse)}]{move(posFlagFalse)}+[- (
+        ) {l}]{r}+[- (
             {actFalse}
-        ) {move(posFlagFalse)}]{move(-posFlagFalse * 2)}
-        """
+        ) {r}]{l}{l}
+    """
+
+def switch(
+    posFlag: int,
+    cases: dict[str | int, str],
+    default: str = reset(),
+):
+    """
+    desc:
+        consuming switch case.
+    
+    before: (@X 0)
+    case X:
+        before: (0 @0)
+        {case}
+        after:  (0 @0)
+    default:
+        before: (@? 0)
+        {default}
+        after:  (@0 0)
+    after:  (@0 0)
+    """
+
+    r = move(posFlag)
+    l = move(-posFlag)
+
+    out = f'{r}+{l}'
+
+    items = sorted((_char_or_int(k), v) for k, v in cases.items())
+
+    out += '('
+    cur = 0
+    for k, _ in items:
+        out += f'{add(cur - k)}[\n'
+        cur = k
+    out += ')'
+    
+    out += f"""
+        {r}-{l} (
+            {default}
+        ) ]==
+    """.strip()
+    
+    out += f'{l}]'.join(f"""
+        {r}[- (
+            {v}
+        ) ]
+    """.strip() for _, v in reversed(items))
+
+    return out + l
 
 def bf_format(text: str, indent: str = '  '):
     """
@@ -140,18 +199,18 @@ def bf_format(text: str, indent: str = '  '):
     for c in text:
         if c == ' ':
             continue
+        if c == '(':
+            depth += 1
+            c = '\n'
+        if c == ')':
+            depth -= 1
+            c = '\n'
         if c == '\n':
             if empty_line:
                 continue
             empty_line = True
             out += c
             continue
-        if c == '(':
-            depth += 1
-            # continue
-        if c == ')':
-            depth -= 1
-            # continue
         if empty_line:
             out += indent * depth
             empty_line = False
@@ -159,11 +218,26 @@ def bf_format(text: str, indent: str = '  '):
     return out
 
 
-res = add(-4) + cond_preserve(
-    1, 2,
-    bf_print('Hello', -1, True),
-    bf_print('World!', 0, True),
-)
+# res = add(-4) + cond_preserve(
+#     1, 2,
+#     bf_print('Hello', True, -1),
+#     bf_print('World!', True, 0),
+# )
+res = ',[ (' + switch(
+    3,
+    {
+        '!': puts('bang'),
+        '<': puts('left'),
+        '>': puts('right'),
+        '+': puts('plus'),
+        '-': puts('minus'),
+        ',': puts('comma'),
+        '.': puts('dot'),
+        '[': puts('open'),
+        ']': puts('close'),
+    },
+    reset() + puts('default')
+) + ') ,]'
 print(bf_format(res))
 
 
