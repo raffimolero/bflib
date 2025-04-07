@@ -114,6 +114,8 @@ def puts(text: str, preserve: bool = True, starting_val: int = 0):
     before: (@starting_val)
     after:  (@starting_val) if preserve else (@?)
     """
+    # HACK: disable all debug prints
+    return ""
     out = ""
     current_val = starting_val
     for c in text:
@@ -320,5 +322,7 @@ def bf_format(text: str, indent: str = "    "):
         if empty_line:
             out += indent * depth
             empty_line = False
-        out += c
+        # HACK: disable comments
+        if c in BF + "\n":
+            out += c
     return out
