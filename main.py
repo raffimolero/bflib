@@ -58,8 +58,8 @@ OPEN = f"""
     ->>[->>]<
     <->[<+ (
         +[<<+] TRUE
-        {puts('TRUE\n')}
-        >-----
+        {puts('TRUE')}
+        >{add(-5)}
     ) ]<[+ (
         +[<<+] FALSE seek
         >>-
@@ -84,15 +84,29 @@ OPEN = f"""
             {clone_to(2)}{move(2)}
         )]
         >>+
-        <-----
+        <{add(-5)}
         <
-        {puts('FALSE\n')}
+        {puts('FALSE')}
     ) ]
-    {puts('OPEN')}
-    >+++++
+    {puts('-OPEN\n')}
+    >{add(5)}
     >-
 """
-CLOSE = f'{puts("CLOSE")}>>-'
+CLOSE = f"""
+    ->>[->>]<
+    <->[<+ (
+        +[<<+] TRUE seek
+        {puts('TRUE')}
+        >{add(-6)}
+    ) ]<[+ (
+        +[<<+] FALSE
+        {puts('FALSE')}
+        >{add(-6)}<
+    ) ]
+    {puts('-CLOSE\n')}
+    >{add(6)}
+    >-
+"""
 OUT = op(".")
 IN = op(",")
 
