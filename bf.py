@@ -282,6 +282,19 @@ def switch(
     return out + l
 
 
+def switch_preserve_rl(
+    posFlag: int,
+    cases: dict[str | int, str],
+    default: str = reset(),
+):
+    """
+    desc:
+        non-consuming switch case.
+
+    """
+    raise "not worth it. probably better to just clone twice and consume the copy, which isn't implemented here yet."
+
+
 def bf_format(text: str, indent: str = "    "):
     """
     formats code based on parentheses

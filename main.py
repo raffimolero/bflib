@@ -1,16 +1,16 @@
 from bf import *
 
 
-res = f"""
-    {setup(+4, [2, 0, 2, 0, 2, 0, 5, 0])}
-    {ifelse_preserve_rl(
-        3, -3,
-        puts('TRUE'),
-        puts('FALSE'),
-    )}
-"""
-print(bf_format(res))
-exit()
+# res = f"""
+#     {setup(+4, [2, 0, 2, 0, 2, 0, 5, 0])}
+#     {ifelse_preserve_rl(
+#         3, -3,
+#         puts('TRUE'),
+#         puts('FALSE'),
+#     )}
+# """
+# print(bf_format(res))
+# exit()
 
 
 def op(operation: str):
@@ -30,13 +30,13 @@ res = f"""
         {add(-5)}[
         {add(-1)}[(
             {add(6)}
-            <<<
-        )]>>[(
-            <<{add(6)}
+            >
+        )]<<[(
+            >>{add(6)}
             <<<<<-
             >>>>
-        )]<<]>>[(
-            <<{add(5)}
+        )]>>]<<[(
+            >>{add(5)}
             <<<<<+
             >>>>
         )]
@@ -63,27 +63,27 @@ OPEN = f"""
     ) ]<[+ (
         +[<<+] FALSE seek
         >>-
-        <<<<
+        <<
         +[(
-            {move(5)}
+            >>>
             >-<
             {add(-5)}[
             {add(-1)}[(
                 {add(6)}
-                <<<
-            )]>>[(
-                <<{add(6)}
-                <<<<<-
-                >>>>
-            )]<<]>>[(
-                <<{add(5)}
-                <<<<<+
-                >>>>
+                >
+            )]<<[(
+                >>{add(6)}
+                <<<-
+                >>
+            )]>>]<<[(
+                >>{add(5)}
+                <<<+
+                >>
             )]
-            <<<<
+            <<
             {clone_to(2)}{move(2)}
         )]
-        >>>>+
+        >>+
         <-----
         <
         {puts('FALSE\n')}
