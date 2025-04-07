@@ -326,3 +326,12 @@ def bf_format(text: str, indent: str = "    "):
         if c in BF + "\n":
             out += c
     return out
+
+
+def bf_minify(text: str, width: int = 80):
+    text = text.translate({ord(" "): None, ord("\n"): None})
+    out = ""
+    while len(text) > 0:
+        out += text[:width] + "\n"
+        text = text[width:]
+    return out
