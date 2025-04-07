@@ -38,6 +38,15 @@ def _char_or_int(val: str | int):
     raise "non integer value passed to _int converter"
 
 
+def setup(pos: int, data: list[int], pad: int = 8):
+    return (
+        move(pad)
+        + "\n"
+        + "".join(f"{add(_wrap(n))}>\n" for n in data)
+        + move(pos - len(data))
+    )
+
+
 def move(amount: int):
     amount = _wrap(amount)
     if amount > 0:
@@ -117,7 +126,7 @@ def puts(text: str, preserve: bool = True, starting_val: int = 0):
     return out
 
 
-def cond_preserve(
+def ifelse_preserve_rr(
     posFlagFalse: int,
     posFlagTrue: int,
     actTrue: str,
@@ -125,7 +134,9 @@ def cond_preserve(
 ):
     """
     desc:
-        actTrue and actFalse begin at @+1, and they must not modify @posFlag.
+        performs an if-else check on the current cell.
+        executes actTrue when it's nonzero, else actFalse when zero.
+        actTrue and actFalse begin at @posFlagTrue, and they must not modify @posFlagFalse.
         modifications to X are actually allowed and will be preserved (labeled Y).
 
     before: (@X 0 0)
@@ -148,6 +159,73 @@ def cond_preserve(
         ) {l}]{r}+[- (
             {actFalse}
         ) {r}]{l}{l}
+    """
+
+
+def if_preserve_rl(
+    posFlagFalse: int,
+    posZeroed: int,
+    actTrue: str,
+):
+    """
+    desc:
+        performs an if- check on the current cell.
+        executes actTrue when it's nonzero, else nothing.
+        actTrue begins at @posFlagFalse, and must set it to zero.
+        ends at the other side.
+
+    before: (0 @X ?)
+    if X != 0:
+        before: (0 X @?)
+        {actTrue}
+        after:  (0 X @0)
+    after:  (@0 X 0)
+    """
+    assert posFlagFalse * -1 == posZeroed
+    r = move(posFlagFalse)
+    l = move(-posFlagFalse)
+    return f"""
+        [{r} (
+            {actTrue}
+        ) ]{l}[{l}]
+    """
+
+
+def ifelse_preserve_rl(
+    posFlagFalse: int,
+    posZeroed: int,
+    actTrue: str,
+    actFalse: str,
+):
+    """
+    desc:
+        performs an if-else check on the current cell.
+        executes actTrue when it's nonzero, else actFalse when zero.
+        actTrue and actFalse begin at @posFlagFalse, and they must not modify @posFlagFalse or @posZeroed.
+        modifications to X are not allowed.
+
+    before: (0 @X 0)
+    if X != 0:
+        before: (0 X @0)
+        {actTrue}
+        after:  (0 X @0)
+    else: # X == 0
+        before: (0 @0 0)
+        {actFalse}
+        after:  (0 @0 0)
+    after:  (@0 X 0)
+    """
+    assert posFlagFalse * -1 == posZeroed
+    r = move(posFlagFalse)
+    l = move(-posFlagFalse)
+
+    return f"""
+        {r}+{l}{if_preserve_rl(
+            posFlagFalse, posZeroed,
+            '-' + actTrue,
+        )}{r}{r}[- (
+            {actFalse}
+        ) ]
     """
 
 
