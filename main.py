@@ -171,4 +171,8 @@ res = f"""
     )]
 
 """
-print(bf_minify(bf_format(res)))
+out = bf_format(res)
+print(bf_minify(out))
+
+with open("bf2.bf", "w") as file:
+    file.write(out)
