@@ -335,7 +335,7 @@ def bf_minify(text: str, width: int = 80):
     line_length = 0
     for c in text:
         if c in BF:
-            if line_length >= 80:
+            if line_length >= width:
                 out += "\n"
                 line_length = 0
             out += c
