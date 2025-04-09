@@ -106,6 +106,7 @@ def reset(amount: int = 0):
 
 
 def puts(text: str, preserve: bool = True, starting_val: int = 0):
+    return ""
     """
     desc:
         prints out some text using one cell. not very efficient but gets the job done.
@@ -114,9 +115,6 @@ def puts(text: str, preserve: bool = True, starting_val: int = 0):
     before: (@starting_val)
     after:  (@starting_val) if preserve else (@?)
     """
-    # HACK: disable all debug prints
-    return ""
-    out = ""
     current_val = starting_val
     for c in text:
         target_val = ord(c)
@@ -302,10 +300,12 @@ def bf_format(text: str, indent: str = "    "):
     formats code based on parentheses
     """
     out = ""
+    space_buf = 0
     empty_line = True
     depth = 0
     for c in text:
         if c == " ":
+            space_buf += 1
             continue
         if c == "(":
             depth += 1
@@ -320,18 +320,24 @@ def bf_format(text: str, indent: str = "    "):
             out += c
             continue
         if empty_line:
+            space_buf = 0
             out += indent * depth
             empty_line = False
-        # HACK: disable comments
-        if c in BF + "\n":
-            out += c
+        else:
+            out += " " * space_buf
+            space_buf = 0
+        out += c
     return out
 
 
 def bf_minify(text: str, width: int = 80):
-    text = text.translate({ord(" "): None, ord("\n"): None})
     out = ""
-    while len(text) > 0:
-        out += text[:width] + "\n"
-        text = text[width:]
+    line_length = 0
+    for c in text:
+        if c in BF:
+            if line_length >= 80:
+                out += "\n"
+                line_length = 0
+            out += c
+            line_length += 1
     return out

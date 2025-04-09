@@ -15,7 +15,7 @@ from bf import *
 
 def op(operation: str):
     return f"""
-        ->>[->>]< (
+        ->>[->>]{puts(operation[0])}< (
             {operation}
         ) <
         +[<<+]>>-
@@ -55,13 +55,14 @@ LEFT = op("<<")
 ADD = op("+")
 SUB = op("-")
 OPEN = f"""
-    ->>[->>]<
+    ->>[->>]{puts('[')}<
     <->[<+ (
         +[<<+] TRUE
-        {puts('TRUE')}
+        {puts(' T\n')}
         >{add(-5)}
     ) ]<[+ (
         +[<<+] FALSE seek
+        {puts(' F...\n')}
         >>-
         <<+[(
             >>>
@@ -79,21 +80,20 @@ OPEN = f"""
                 <<<+
                 >>
             )]
-            {clone_to(2)}{move(2)}
+            {move(-2)}{clone_to(2)}{move(2)}
         )]
         >>+
         <{add(-5)}
         <
-        {puts('FALSE')}
     ) ]
-    {puts('-OPEN\n')}
     >{add(5)}
     >-
 """
 CLOSE = f"""
-    ->>[->>]<
+    ->>[->>]{puts(']')}<
     <->[<+ (
         +[<<+] TRUE seek
+        {puts(' T...\n')}
         <<<<
         +[(
             >>>
@@ -115,13 +115,11 @@ CLOSE = f"""
             {clone_to(-2)}{move(-2)}
         )]
         >>>>>{add(-5)}
-        <{puts('TRUE')}>
     ) ]<[+ (
         +[<<+] FALSE
-        {puts('FALSE')}
+        {puts(' F\n')}
         >{add(-5)}<
     ) ]
-    {puts('-CLOSE\n')}
     >{add(5)}
     >-
 """
