@@ -1,5 +1,6 @@
 from bf import *
 
+Options.DEBUG = False
 
 # res = f"""
 #     {setup(+4, [2, 0, 2, 0, 2, 0, 5, 0])}
@@ -15,7 +16,7 @@ from bf import *
 
 def op(operation: str):
     return f"""
-        >>[>>]{puts(operation[0])}< (
+        >>[>>]{log(operation[0])}< (
             {operation}
         ) <[<<]>>-
     """
@@ -54,14 +55,14 @@ LEFT = op("<-<")
 ADD = op("+")
 SUB = op("-")
 OPEN = f"""
-    >>[>>]{puts('[')}<
+    >>[>>]{log('[')}<
     [< (
         [<<] TRUE
-        {puts(' T\n')}
+        {log(' T\n')}
         >{add(-5)}
     ) ]<[ (
         [<<] FALSE seek
-        {puts(' F...\n')}
+        {log(' F...\n')}
         >>-
         {move(-2)}
         +[(
@@ -90,10 +91,10 @@ OPEN = f"""
     >-
 """
 CLOSE = f"""
-    >>[>>]{puts(']')}<
+    >>[>>]{log(']')}<
     [< (
         [<<] TRUE seek
-        {puts(' T...\n')}
+        {log(' T...\n')}
         {move(-4)} 
         +[(
             >>>
@@ -116,7 +117,7 @@ CLOSE = f"""
         >>>>>{add(-5)}
     ) ]<[ (
         [<<] FALSE
-        {puts(' F\n')}
+        {log(' F\n')}
         >{add(-5)}<
     ) ]
     >{add(5)}
@@ -149,6 +150,7 @@ res = f"""
     [(
         >>
         >,
+        {dbg('.')}
         {switch(
             1,
             ENCODING,
@@ -172,7 +174,10 @@ res = f"""
 
 """
 out = bf_format(res)
-print(bf_minify(out))
+if not Options.DEBUG:
+    out = bf_minify(out)
+
+print(out)
 
 with open("bf2.bf", "w") as file:
     file.write(out)

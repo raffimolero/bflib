@@ -2,6 +2,24 @@ import traceback
 import re
 import math
 
+
+class Options:
+    DEBUG = True
+
+
+def dbg(text: str):
+    return f"\n{{DEBUG}} ({text}) {{/DEBUG}}\n" if Options.DEBUG else ""
+
+
+def log(text: str, preserve: bool = True, starting_val: int = 0):
+    return dbg(
+        f"""
+            log
+           {puts(text, preserve, starting_val)}
+       """
+    )
+
+
 BF = "[]+-,.<>"
 BF = "".join(f"\\{c}" for c in BF)
 
@@ -106,7 +124,6 @@ def reset(amount: int = 0):
 
 
 def puts(text: str, preserve: bool = True, starting_val: int = 0):
-    return ""
     """
     desc:
         prints out some text using one cell. not very efficient but gets the job done.
@@ -115,6 +132,7 @@ def puts(text: str, preserve: bool = True, starting_val: int = 0):
     before: (@starting_val)
     after:  (@starting_val) if preserve else (@?)
     """
+    out = ""
     current_val = starting_val
     for c in text:
         target_val = ord(c)
