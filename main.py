@@ -17,8 +17,7 @@ def op(operation: str):
     return f"""
         >>[>>]{puts(operation[0])}< (
             {operation}
-        ) <
-        [<<]>>-
+        ) <[<<]>>-
     """
 
 
@@ -64,7 +63,8 @@ OPEN = f"""
         [<<] FALSE seek
         {puts(' F...\n')}
         >>-
-        <<+[(
+        {move(-2)}
+        +[(
             >>>
             >-<
             {add(-5)}[
@@ -94,7 +94,7 @@ CLOSE = f"""
     [< (
         [<<] TRUE seek
         {puts(' T...\n')}
-        <<<<
+        {move(-4)} 
         +[(
             >>>
             {add(-5)}[
@@ -111,8 +111,7 @@ CLOSE = f"""
                 >>
             )]
             >>+
-            <<<<
-            {clone_to(-2)}{move(-2)}
+            {move(-4)}{clone_to(-2)}{move(-2)}
         )]
         >>>>>{add(-5)}
     ) ]<[ (
@@ -126,6 +125,8 @@ CLOSE = f"""
 OUT = op(".")
 IN = op(",")
 
+
+ENCODING = {c: f"<<{add(i + 1)}>>" for i, c in enumerate("><+-[].,")} | {"!": "", 0: ""}
 
 # at this point, pointer is at the previous instruction
 # +1 to the last free space
@@ -150,7 +151,7 @@ res = f"""
         >,
         {switch(
             1,
-            {c: f'<<{add(i + 1)}>>' for i, c in enumerate('><+-[].,')} | {'!': '', 0: ''},
+            ENCODING,
             reset() + '<<'
         )}
         <

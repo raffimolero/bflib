@@ -253,30 +253,30 @@ def switch(
     r = move(posFlag)
     l = move(-posFlag)
 
-    out = f"{r}+{l}"
+    out = f"{r}+{l} switch @0 with @{posFlag} as scratch"
 
     items = sorted((_char_or_int(k), v) for k, v in cases.items())
 
     out += "("
     cur = 0
     for k, _ in items:
-        out += f"{add(cur - k)}[\n"
+        out += f"{add(cur - k)}[ case {k}\n"
         cur = k
     out += ")"
 
     out += f"""
-        {r}-{l} (
+        {r}-{l} default (
             {default}
         ) ]==
     """.strip()
 
     out += f"{l}]".join(
         f"""
-        {r}[- (
+        {r}[- case {k} (
             {v}
         ) ]
     """.strip()
-        for _, v in reversed(items)
+        for k, v in reversed(items)
     )
 
     return out + l
