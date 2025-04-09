@@ -15,10 +15,10 @@ from bf import *
 
 def op(operation: str):
     return f"""
-        ->>[->>]{puts(operation[0])}< (
+        >>[>>]{puts(operation[0])}< (
             {operation}
         ) <
-        +[<<+]>>-
+        [<<]>>-
     """
 
 
@@ -50,8 +50,8 @@ res = f"""
 # print(bf_format(res))
 # exit()
 
-RIGHT = op(">>")
-LEFT = op("<<")
+RIGHT = op(">+>")
+LEFT = op("<-<")
 ADD = op("+")
 SUB = op("-")
 OPEN = f"""
