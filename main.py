@@ -55,13 +55,13 @@ LEFT = op("<-<")
 ADD = op("+")
 SUB = op("-")
 OPEN = f"""
-    ->>[->>]{puts('[')}<
-    <->[<+ (
-        +[<<+] TRUE
+    >>[>>]{puts('[')}<
+    [< (
+        [<<] TRUE
         {puts(' T\n')}
         >{add(-5)}
-    ) ]<[+ (
-        +[<<+] FALSE seek
+    ) ]<[ (
+        [<<] FALSE seek
         {puts(' F...\n')}
         >>-
         <<+[(
@@ -82,8 +82,8 @@ OPEN = f"""
             )]
             {move(-2)}{clone_to(2)}{move(2)}
         )]
-        >>+
-        <{add(-5)}
+        >>+<<
+        >{add(-5)}
         <
     ) ]
     >{add(5)}
