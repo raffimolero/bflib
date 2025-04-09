@@ -58,10 +58,7 @@ def _char_or_int(val: str | int):
 
 def setup(pos: int, data: list[int], pad: int = 8):
     return (
-        move(pad)
-        + "\n"
-        + "".join(f"{add(_wrap(n))}>\n" for n in data)
-        + move(pos - len(data))
+        move(pad) + "\n" + "".join(f"{add(n)}>\n" for n in data) + move(pos - len(data))
     )
 
 
