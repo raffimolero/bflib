@@ -142,7 +142,7 @@ INSTRUCTIONS = {
 }
 
 res = f"""
-    {move(8)}
+    {move(2)}
     -
     >+
     [(
