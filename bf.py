@@ -48,14 +48,6 @@ def _wrap(amount: int):
     return (amount + 128) % 256 - 128
 
 
-def _char_or_int(val: str | int):
-    if isinstance(val, int):
-        return val
-    if isinstance(val, str) and len(val) == 1:
-        return ord(val)
-    raise "non integer value passed to _int converter"
-
-
 def setup(pos: int, data: list[int], pad: int = 8):
     return (
         move(pad) + "\n" + "".join(f"{add(n)}>\n" for n in data) + move(pos - len(data))
@@ -71,12 +63,12 @@ def move(amount: int):
     return ""
 
 
-def add(amount: int):
+def add(amount: int, pos: int = 0):
     amount = _wrap(amount)
     if amount > 0:
-        return "+" * amount
+        return f'{move(pos)}{"+" * amount}{move(-pos)}'
     if amount < 0:
-        return "-" * -amount
+        return f'{move(pos)}{"-" * -amount}{move(-pos)}'
     return ""
 
 
@@ -120,7 +112,7 @@ def reset(amount: int = 0):
     return "[-]" + add(amount)
 
 
-def puts(text: str, preserve: bool = True, starting_val: int = 0):
+def puts(text: str, preserve: bool = True, starting_val: int = 0) -> str:
     """
     desc:
         prints out some text using one cell. not very efficient but gets the job done.
@@ -146,7 +138,7 @@ def ifelse_preserve_rr(
     posFlagTrue: int,
     actTrue: str,
     actFalse: str,
-):
+) -> str:
     """
     desc:
         performs an if-else check on the current cell.
@@ -181,7 +173,7 @@ def if_preserve_rl(
     posFlagFalse: int,
     posZeroed: int,
     actTrue: str,
-):
+) -> str:
     """
     desc:
         performs an if- check on the current cell.
@@ -211,7 +203,7 @@ def ifelse_preserve_rl(
     posZeroed: int,
     actTrue: str,
     actFalse: str,
-):
+) -> str:
     """
     desc:
         performs an if-else check on the current cell.
@@ -244,11 +236,45 @@ def ifelse_preserve_rl(
     """
 
 
-def switch(
+def switch_map(
+    pos: int, cases: dict[int, int], default: int | str | None = None
+) -> str:
+    """
+    desc:
+        consuming switch case that maps one set of values to another.
+
+    before: (@X 0)
+    after: (@0 Y)
+    """
+
+    items = sorted((k, v) for k, v in cases.items())
+
+    out = ""
+    cur_k, cur_v = 0, 0
+    for k, v in items:
+        out += f"""
+            {add(v - cur_v, pos)}{add(cur_k - k)}[ case {k} = {v}
+        """
+        cur_k, cur_v = k, v
+
+    if default == None:
+        default = cur_v
+    if isinstance(default, int):
+        default = f"""
+            default (
+                {add(-cur_v, pos)}
+                [-]
+            )
+        """
+
+    return out + default + "]" * len(items)
+
+
+def switch_consume(
     posFlag: int,
-    cases: dict[str | int, str],
-    default: str = reset(),
-):
+    cases: dict[int, str],
+    default: str = "[-]",
+) -> str:
     """
     desc:
         consuming switch case.
@@ -270,7 +296,7 @@ def switch(
 
     out = f"{r}+{l} switch @0 with @{posFlag} as scratch"
 
-    items = sorted((_char_or_int(k), v) for k, v in cases.items())
+    items = sorted((k, v) for k, v in cases.items())
 
     out += "("
     cur = 0
@@ -300,8 +326,8 @@ def switch(
 def switch_preserve_rl(
     posFlag: int,
     cases: dict[str | int, str],
-    default: str = reset(),
-):
+    default: str = "[-]",
+) -> str:
     """
     desc:
         non-consuming switch case.
@@ -310,7 +336,7 @@ def switch_preserve_rl(
     raise "not worth it. probably better to just clone twice and consume the copy, which isn't implemented here yet."
 
 
-def bf_format(text: str, indent: str = "    "):
+def bf_format(text: str, indent: str = "    ") -> str:
     """
     formats code based on parentheses
     """
@@ -345,7 +371,7 @@ def bf_format(text: str, indent: str = "    "):
     return out
 
 
-def bf_minify(text: str, width: int = 80):
+def bf_minify(text: str, width: int = 80) -> str:
     out = ""
     line_length = 0
     for c in text:

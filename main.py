@@ -127,7 +127,9 @@ OUT = op(".")
 IN = op(",")
 
 
-ENCODING = {c: f"<<{add(i + 1)}>>" for i, c in enumerate("><+-[].,")} | {"!": "", 0: ""}
+ENCODING = {ord(c): i for i, c in enumerate("!><+-[].,")} | {
+    0: 0,
+}
 
 # at this point, pointer is at the previous instruction
 # +1 to the last free space
@@ -151,10 +153,10 @@ res = f"""
         >>
         >,
         {dbg('.')}
-        {switch(
-            1,
+        {switch_map(
+            -1,
             ENCODING,
-            reset() + '<<'
+            '[[-]<]'
         )}
         <
     )]
@@ -165,7 +167,7 @@ res = f"""
         {move(-1)}
         {clone_to(1)}
         {move(-2)}
-        {switch(
+        {switch_consume(
             2,
             INSTRUCTIONS
         )}
