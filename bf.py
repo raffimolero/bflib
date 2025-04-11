@@ -58,6 +58,14 @@ def _wrap(amount: int):
     return (amount + 128) % 256 - 128
 
 
+def _char_or_int(val: str | int):
+    if isinstance(val, int):
+        return val
+    if isinstance(val, str) and len(val) == 1:
+        return ord(val)
+    raise "non integer value passed to _int converter"
+
+
 def bf_escape(num: int) -> str:
     return str(num).replace("-", "~")
 
@@ -272,7 +280,7 @@ def switch_map(
     after: (@0 Y)
     """
 
-    items = sorted((k, v) for k, v in cases.items())
+    items = sorted((_char_or_int(k), v) for k, v in cases.items())
 
     out = ""
     cur_k, cur_v = 0, 0
@@ -322,7 +330,7 @@ def switch_consume(
 
     out = f"{r}+{l} switch @0 with @{bf_escape(posFlag)} as scratch"
 
-    items = sorted((k, v) for k, v in cases.items())
+    items = sorted((_char_or_int(k), v) for k, v in cases.items())
 
     out += "("
     cur = 0
@@ -380,7 +388,7 @@ def switch_preserve_rl(
 
     out = f"switch preserving @0: @{bf_escape(posZeroL)} and @{bf_escape(posZeroR)} assumed zero; @{bf_escape(posTrueL)} assumed nonzero"
 
-    items = sorted((k, v) for k, v in cases.items())
+    items = sorted((_char_or_int(k), v) for k, v in cases.items())
     deltas = []
 
     out += "("

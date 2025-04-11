@@ -49,47 +49,63 @@ def op(operation: str):
 # print(bf_format(res))
 # exit()
 
-RIGHT = op(">+>")
-LEFT = op("<-<")
-ADD = op("+")
-SUB = op("-")
-OPEN = f"""
+# at this point, pointer is at the previous instruction
+# +1 to the last free space
+# +3 to the nearest marker
+INSTRUCTIONS = {
+    "[": "",
+    "]": "",
+    ">": op(">+>"),
+    "<": op("<-<"),
+    "+": op("+"),
+    "-": op("-"),
+    ".": op("."),
+    ",": op(","),
+}
+
+OPEN = 1
+CLOSE = 2
+INSTRUCTIONS[
+    "["
+] = f"""
     >>[>>]{log('[')}<
     [< (
         [<<] TRUE
         {log(' T\n')}
-        >{add(-5)}
+        >{add(-OPEN)}
     ) ]<[ (
         [<<] FALSE seek
         {log(' F...\n')}
         >>-
-        {move(-2)}
+        {move(-CLOSE)}
         +[(
             >>>
             >-<
-            {add(-5)}[
-            {add(-1)}[(
-                {add(6)}
+            {add(-OPEN)}[
+            {add(OPEN - CLOSE)}[(
+                {add(CLOSE)}
                 >
             )]===<<[(
-                >>{add(6)}
+                >>{add(CLOSE)}
                 <<<-
                 >>
             )]>>]<<[(
-                >>{add(5)}
+                >>{add(OPEN)}
                 <<<+
                 >>
             )]
             {move(-2)}{clone_to(2)}{move(2)}
         )]
         >>+<<
-        >{add(-5)}
+        >{add(-OPEN)}
         <
     ) ]
-    >{add(5)}
+    >{add(OPEN)}
     >-
 """
-CLOSE = f"""
+INSTRUCTIONS[
+    "]"
+] = f"""
     >>[>>]{log(']')}<
     [< (
         [<<] TRUE seek
@@ -97,57 +113,43 @@ CLOSE = f"""
         {move(-4)} 
         +[(
             >>>
-            {add(-5)}[
-            {add(-1)}[(
-                {add(6)}
+            {add(-OPEN)}[
+            {add(OPEN - CLOSE)}[(
+                {add(CLOSE)}
                 >
             )]===<<[(
-                >>{add(6)}
+                >>{add(CLOSE)}
                 <<<+
                 >>
             )]>>]<<[(
-                >>{add(5)}
+                >>{add(OPEN)}
                 <<<-
                 >>
             )]
             >>+
             {move(-4)}{clone_to(-2)}{move(-2)}
         )]
-        >>>>>{add(-5)}
+        >>>>>{add(-OPEN)}
     ) ]<[ (
         [<<] FALSE
         {log(' F\n')}
-        >{add(-5)}<
+        >{add(-OPEN)}<
     ) ]
-    >{add(5)}
+    >{add(OPEN)}
     >-
 """
-OUT = op(".")
-IN = op(",")
 
 
-ENCODING = {ord(c): i for i, c in enumerate("!><+-[].,")} | {
+ENCODING = {ord(c): i + 1 for i, c in enumerate(INSTRUCTIONS.keys())} | {
+    ord("!"): 0,
     0: 0,
 }
 
-# at this point, pointer is at the previous instruction
-# +1 to the last free space
-# +3 to the nearest marker
-INSTRUCTIONS = {
-    1: RIGHT,
-    2: LEFT,
-    3: ADD,
-    4: SUB,
-    5: OPEN,
-    6: CLOSE,
-    7: OUT,
-    8: IN,
-}
 
 res = f"""
     {move(2)}
     -
-    >+
+    >{add(3)}
     [(
         >>
         >,
@@ -168,7 +170,7 @@ res = f"""
         {move(-2)}
         {switch_consume(
             2,
-            INSTRUCTIONS
+            {i + 1: v for i, v in enumerate(INSTRUCTIONS.values())},
         )}
         {move(3 - 2)}
     )]
