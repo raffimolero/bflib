@@ -9,13 +9,13 @@ class Options:
 
 
 def dbg(text: str):
-    return f"\n{{DEBUG}} ({text}) {{/DEBUG}}\n" if Options.DEBUG else ""
+    return f"\n{{DEBUG:}} ({text}) {{:DEBUG}}\n" if Options.DEBUG else ""
 
 
 def log(text: str, pos: int = 0, preserve: bool = True, starting_val: int = 0):
     return dbg(
         f"""
-            log {bf_escape(text)}
+            LOG: {bf_escape(text)}
             {move(pos)}
             {puts(text, preserve, starting_val)}
             {move(-pos)}
@@ -81,17 +81,17 @@ def bf_escape_num(num: int) -> str:
 
 def bf_escape_chr(num: int) -> str:
     out = bf_escape_num(num)
-    out += BF_NAMES.get(num, bf_escape_num(repr(chr(num))))
+    out += " " + BF_NAMES.get(num, bf_escape_num(repr(chr(num))))
     return out
 
 
 def setup(pos: int, data: list[int], pad: int = 8) -> str:
     return f"""
-        SETUP: (
+        {{SETUP:}} (
             {move(pad)}
             {"".join(f"{add(n)}> {bf_escape_chr(n)}\n" for n in data)}
             {move(pos - len(data))}
-        )
+        ) {{:SETUP}}
     """
 
 
