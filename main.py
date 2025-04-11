@@ -1,25 +1,29 @@
 from bf import *
 
 Options.DEBUG = False
+Options.MINIFY = True
 
-# res = f"""
-#     {setup(+4, [2, 0, 2, 0, 2, 0, 5, 0])}
-#     {switch_preserve_rl(
-#         -2, -1, 1,
-#         {1: puts('ONE'), 2: puts('TWO')},
-#     )}
-# """
+res = f"""
+    {switch_preserve_rl(
+        -2, -1, 1,
+        {
+            1: '> ONE',
+            2: '> TWO',
+            3: '> THREE'
+        },
+    )}
+"""
 # print(bf_format(res))
 # exit()
 
 
 def op(operation: str):
     return f"""
-        ( t  0 @0  1  Y  1)
-        >->>[>>]{log(operation[0])}< (
+        (@T 0 0 1 Y 1)
+        >>>->>[>>]{log(operation[0])}< (
             {operation}
-        ) <[<<]<
-        ( t  0 @0  0  Y  1)
+        ) <[<<]<<
+        (T @0 0 0 Y 1)
     """
 
 
@@ -70,7 +74,7 @@ CLOSE = 2
 INSTRUCTIONS[
     "["
 ] = f"""
-    >->>[>>]{log('[')}<
+    >>>->>[>>]{log('[')}<
     [ (
         <[<<]< TRUE
         {log(' T\n')}
@@ -84,8 +88,8 @@ INSTRUCTIONS[
             {switch_preserve_rl(
                 -2, -1, 1,
                 {
-                    OPEN: '<<<+>>>',
-                    CLOSE: '<<<->>>',
+                    OPEN: '<+>>',
+                    CLOSE: '<->>',
                 },
             )}
             <<<
@@ -93,12 +97,11 @@ INSTRUCTIONS[
         )]
         >-<
     ) ]
-    >
 """
 INSTRUCTIONS[
     "]"
 ] = f"""
-    >[>>]{log(']')}<
+    >>>[>>]{log(']')}<
     [ (
         <[<<]> TRUE seek
         {log(' T...\n')}
@@ -109,8 +112,8 @@ INSTRUCTIONS[
             {switch_preserve_rl(
                 -2, -1, 1,
                 {
-                    OPEN: '<<<->>>',
-                    CLOSE: '<<<+>>>',
+                    OPEN: '<->>',
+                    CLOSE: '<+>>',
                 },
             )}
             >+<
@@ -123,7 +126,7 @@ INSTRUCTIONS[
         >{add(CLOSE - OPEN)}<
     ) ]
     >{add(OPEN - CLOSE)}
-    >-<
+    >-<<
 """
 
 
@@ -178,8 +181,6 @@ res = f"""
 
 """
 out = bf_format(res)
-if not Options.DEBUG:
-    out = bf_minify(out)
 
 print(out)
 

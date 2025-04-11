@@ -5,6 +5,7 @@ import math
 
 class Options:
     DEBUG = True
+    MINIFY = False
 
 
 def dbg(text: str):
@@ -174,6 +175,7 @@ def puts(text: str, preserve: bool = True, starting_val: int = 0) -> str:
     return out
 
 
+# TODO: more precise contract
 def ifelse_preserve_rr(
     posFlagFalse: int,
     posFlagTrue: int,
@@ -370,22 +372,22 @@ def switch_preserve_rl(
     posZeroL: int,
     posZeroR: int,
     cases: dict[str | int, str],
-    default: str = "",
+    default: str = ">",
 ) -> str:
     """
     desc:
-        non-consuming switch case.
+        non-consuming switch-case.
 
-    before: (t ? @X ?)
+    before: (T ? @X ?)
     default:
-        before: (? ? @X ?)
+        before: (? ? @? ?)
         {default}
-        after:  (? 0 @X 0)
+        after:  (? 0 ? @0)
     case X:
-        before: (t ? @0 ?)
+        before: (@T ? 0 ?)
         {case}
-        after:  (t 0 @0 0)
-    after:  (t 0 @X 0)
+        after:  (T @0 X 0)
+    after:  (T 0 @Y 0)
     """
     assert len(cases) > 0
     assert posZeroL == -posZeroR
@@ -410,15 +412,14 @@ def switch_preserve_rl(
     out += f"""
         default (
             {default}
-            {r}
         ) ]===
     """.strip()
 
     out += f"{r}]".join(
         f"""
-        {l}{l}[{r}{r} case {bf_escape_chr(k)} (
+        {l}{l}[ case {bf_escape_chr(k)} (
             {v}
-        ) {l}]{r}{add(d)}
+        ) ]{r}{add(d)}
     """.strip()
         for (k, v), d in zip(reversed(items), reversed(deltas))
     )
@@ -458,6 +459,8 @@ def bf_format(text: str, indent: str = "    ") -> str:
             out += " " * space_buf
             space_buf = 0
         out += c
+    if Options.MINIFY:
+        out = bf_minify(out)
     return out
 
 
