@@ -21,7 +21,17 @@ def log(text: str, preserve: bool = True, starting_val: int = 0):
 
 
 BF = "[]+-,.<>"
-BF = "".join(f"\\{c}" for c in BF)
+# BF_RE = "".join(f"\\{c}" for c in BF)
+BF_NAMES = {
+    "[": "OPEN",
+    "]": "CLOSE",
+    "+": "INC",
+    "-": "DEC",
+    ",": "IN",
+    ".": "OUT",
+    "<": "LEFT",
+    ">": "RIGHT",
+}
 
 
 class MotionFactor:
@@ -48,13 +58,27 @@ def _wrap(amount: int):
     return (amount + 128) % 256 - 128
 
 
-def setup(pos: int, data: list[int], pad: int = 8):
-    return (
-        move(pad) + "\n" + "".join(f"{add(n)}>\n" for n in data) + move(pos - len(data))
-    )
+def bf_escape(num: int) -> str:
+    return str(num).replace("-", "~")
 
 
-def move(amount: int):
+def bf_escape_chr(num: int) -> str:
+    out = bf_escape(num)
+    out += BF_NAMES.get(chr(num), bf_escape(repr(chr(num))))
+    return out
+
+
+def setup(pos: int, data: list[int], pad: int = 8) -> str:
+    return f"""
+        SETUP: (
+            {move(pad)}
+            {"".join(f"{add(n)}> {bf_escape_chr(n)}\n" for n in data)}
+            {move(pos - len(data))}
+        )
+    """
+
+
+def move(amount: int) -> str:
     amount = _wrap(amount)
     if amount > 0:
         return ">" * amount
@@ -63,7 +87,7 @@ def move(amount: int):
     return ""
 
 
-def add(amount: int, pos: int = 0):
+def add(amount: int, pos: int = 0) -> str:
     amount = _wrap(amount)
     if amount > 0:
         return f'{move(pos)}{"+" * amount}{move(-pos)}'
@@ -72,7 +96,7 @@ def add(amount: int, pos: int = 0):
     return ""
 
 
-def clone_to(*args):
+def clone_to(*args) -> str:
     """
     desc:
         clones the current cell to a set of other specific locations, possibly with a multiplier.
@@ -82,7 +106,7 @@ def clone_to(*args):
         {clone_to(1, 3, (2, 5))}
         after:  (@0 N N*5 N)
     """
-    out = "[- ("
+    out = "[- clone ("
     current_pos = 0
 
     def normalize(item):
@@ -95,13 +119,14 @@ def clone_to(*args):
     args = sorted(map(normalize, args))
     for target_pos, target_factor in args:
         out += move(target_pos - current_pos)
-        out += add(target_factor) + "\n"
+        out += add(target_factor)
+        out += f" *{bf_escape(target_factor)}\n"
         current_pos = target_pos
     out += move(0 - current_pos) + "\n"
     return out + ") ]"
 
 
-def reset(amount: int = 0):
+def reset(amount: int = 0) -> str:
     """
     desc:
         sets the current cell to a specified amount.
@@ -161,9 +186,9 @@ def ifelse_preserve_rr(
     r = move(posFlagFalse)
     l = move(-posFlagFalse)
     return f"""
-        [{r}{r}- (
+        [{r}{r}- if (
             {actTrue}
-        ) {l}]{r}+[- (
+        ) {l}]{r}+[- else (
             {actFalse}
         ) {r}]{l}{l}
     """
@@ -192,7 +217,7 @@ def if_preserve_rl(
     r = move(posFlagFalse)
     l = move(-posFlagFalse)
     return f"""
-        [{r} (
+        [{r} if (
             {actTrue}
         ) ]{l}[{l}]
     """
@@ -230,7 +255,7 @@ def ifelse_preserve_rl(
         {r}+{l}{if_preserve_rl(
             posFlagFalse, posZeroed,
             '-' + actTrue,
-        )}{r}{r}[- (
+        )}{r}{r}[- else (
             {actFalse}
         ) ]
     """
@@ -253,7 +278,7 @@ def switch_map(
     cur_k, cur_v = 0, 0
     for k, v in items:
         out += f"""
-            {add(v - cur_v, pos)}{add(cur_k - k)}[ case {k} = {v}
+            {add(v - cur_v, pos)}{add(cur_k - k)}[ case {bf_escape_chr(k)} = {bf_escape_chr(v)}
         """
         cur_k, cur_v = k, v
 
@@ -280,28 +305,29 @@ def switch_consume(
         consuming switch case.
 
     before: (@X 0)
-    case X:
-        before: (0 @0)
-        {case}
-        after:  (0 @0)
     default:
         before: (@? 0)
         {default}
         after:  (@0 0)
-    after:  (@0 0)
+    case X:
+        before: (0 @0)
+        {case}
+        after:  (0 @0)
+    after:  (0 @0)
     """
+    assert len(cases) > 0
 
     r = move(posFlag)
     l = move(-posFlag)
 
-    out = f"{r}+{l} switch @0 with @{posFlag} as scratch"
+    out = f"{r}+{l} switch @0 with @{bf_escape(posFlag)} as scratch"
 
     items = sorted((k, v) for k, v in cases.items())
 
     out += "("
     cur = 0
     for k, _ in items:
-        out += f"{add(cur - k)}[ case {k}\n"
+        out += f"{add(cur - k)}[ case {bf_escape_chr(k)}\n"
         cur = k
     out += ")"
 
@@ -313,27 +339,75 @@ def switch_consume(
 
     out += f"{l}]".join(
         f"""
-        {r}[- case {k} (
+        {r}[- case {bf_escape_chr(k)} (
             {v}
         ) ]
     """.strip()
         for k, v in reversed(items)
     )
 
-    return out + l
+    return out
 
 
 def switch_preserve_rl(
-    posFlag: int,
+    posTrueL: int,
+    posZeroL: int,
+    posZeroR: int,
     cases: dict[str | int, str],
-    default: str = "[-]",
+    default: str = "",
 ) -> str:
     """
     desc:
         non-consuming switch case.
 
+    before: (t 0 @X 0)
+    default:
+        before: (t 0 @X 0)
+        {default}
+        after:  (t 0 @X 0)
+    case X:
+        before: (@t 0 0 0)
+        {case}
+        after:  (@t 0 0 0)
+    after:  (t 0 @X 0)
     """
-    raise "not worth it. probably better to just clone twice and consume the copy, which isn't implemented here yet."
+    assert len(cases) > 0
+    assert posZeroL == -posZeroR
+    assert posTrueL == posZeroL * 2
+
+    r = move(posZeroR)
+    l = move(-posZeroR)
+
+    out = f"switch preserving @0: @{bf_escape(posZeroL)} and @{bf_escape(posZeroR)} assumed zero; @{bf_escape(posTrueL)} assumed nonzero"
+
+    items = sorted((k, v) for k, v in cases.items())
+    deltas = []
+
+    out += "("
+    cur = 0
+    for k, _ in items:
+        deltas.append(k - cur)
+        out += f"{add(cur - k)}[ case {bf_escape_chr(k)}\n"
+        cur = k
+    out += ")"
+
+    out += f"""
+        default (
+            {default}
+            {r}
+        ) ]===
+    """.strip()
+
+    out += f"{r}]".join(
+        f"""
+        {l}{l}[{r}{r} case {bf_escape_chr(k)} (
+            {v}
+        ) {l}]{r}{add(d)}
+    """.strip()
+        for (k, v), d in zip(reversed(items), reversed(deltas))
+    )
+
+    return out
 
 
 def bf_format(text: str, indent: str = "    ") -> str:
