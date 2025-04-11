@@ -15,9 +15,11 @@ Options.DEBUG = False
 
 def op(operation: str):
     return f"""
-        >>[>>]{log(operation[0])}< (
+        ( t  0 @0  1  Y  1)
+        >->>[>>]{log(operation[0])}< (
             {operation}
-        ) <[<<]>>-
+        ) <[<<]<
+        ( t  0 @0  0  Y  1)
     """
 
 
@@ -68,75 +70,60 @@ CLOSE = 2
 INSTRUCTIONS[
     "["
 ] = f"""
-    >>[>>]{log('[')}<
-    [< (
-        [<<] TRUE
+    >->>[>>]{log('[')}<
+    [ (
+        <[<<]< TRUE
         {log(' T\n')}
-        >{add(-OPEN)}
     ) ]<[ (
-        [<<] FALSE seek
-        {log(' F...\n')}
-        >>-
-        {move(-CLOSE)}
+        [<<]< FALSE seek
+        {log(' F...\n', 1)}
+        {add(OPEN)}<
         +[(
             >>>
             >-<
-            {add(-OPEN)}[
-            {add(OPEN - CLOSE)}[(
-                {add(CLOSE)}
-                >
-            )]===<<[(
-                >>{add(CLOSE)}
-                <<<-
-                >>
-            )]>>]<<[(
-                >>{add(OPEN)}
-                <<<+
-                >>
-            )]
-            {move(-2)}{clone_to(2)}{move(2)}
+            {switch_preserve_rl(
+                -2, -1, 1,
+                {
+                    OPEN: '<<<+>>>',
+                    CLOSE: '<<<->>>',
+                },
+            )}
+            <<<
+            [->>+<<]>>
         )]
-        >>+<<
-        >{add(-OPEN)}
-        <
+        >-<
     ) ]
-    >{add(OPEN)}
-    >-
+    >
 """
 INSTRUCTIONS[
     "]"
 ] = f"""
-    >>[>>]{log(']')}<
-    [< (
-        [<<] TRUE seek
+    >[>>]{log(']')}<
+    [ (
+        <[<<]> TRUE seek
         {log(' T...\n')}
-        {move(-4)} 
-        +[(
-            >>>
-            {add(-OPEN)}[
-            {add(OPEN - CLOSE)}[(
-                {add(CLOSE)}
-                >
-            )]===<<[(
-                >>{add(CLOSE)}
-                <<<+
-                >>
-            )]>>]<<[(
-                >>{add(OPEN)}
-                <<<-
-                >>
-            )]
-            >>+
-            {move(-4)}{clone_to(-2)}{move(-2)}
-        )]
-        >>>>>{add(-OPEN)}
+        {add(CLOSE)}
+        <<
+        <+[ (
+            [-<<+>>]>
+            {switch_preserve_rl(
+                -2, -1, 1,
+                {
+                    OPEN: '<<<->>>',
+                    CLOSE: '<<<+>>>',
+                },
+            )}
+            >+<
+            <<<
+        ) ]
+        >>>{add(-OPEN)}
     ) ]<[ (
         [<<] FALSE
         {log(' F\n')}
-        >{add(-OPEN)}<
+        >{add(CLOSE - OPEN)}<
     ) ]
-    >{add(OPEN)}
-    >-
+    >{add(OPEN - CLOSE)}
+    >-<
 """
 
 
@@ -145,11 +132,29 @@ ENCODING = {ord(c): i + 1 for i, c in enumerate(INSTRUCTIONS.keys())} | {
     0: 0,
 }
 
+# EXECUTE = f"""
+#     {clone_to(-1, -3)}
+#     {move(-1)}
+#     {clone_to(1)}
+#     {move(-2)}
+#     {switch_consume(
+#         2,
+#         {i + 1: v for i, v in enumerate(INSTRUCTIONS.values())},
+#     )}
+#     {move(3 - 2)}
+# """
+EXECUTE = f"""
+    {switch_preserve_rl(
+        -2, -1, 1,
+        {i + 1: v for i, v in enumerate(INSTRUCTIONS.values())},
+    )}
+"""
+# print(bf_format(EXECUTE))
+# exit()
 
 res = f"""
     {move(2)}
-    -
-    >{add(3)}
+    ->{log('reading input\n')}+
     [(
         >>
         >,
@@ -157,22 +162,18 @@ res = f"""
         {switch_map(
             -1,
             ENCODING,
-            '[[-]<]'
+            '[[-]<]',
         )}
         <
     )]
     >
     +[<<+]
-    >[(
-        {clone_to(-1, -3)}
-        {move(-1)}
-        {clone_to(1)}
-        {move(-2)}
-        {switch_consume(
-            2,
-            {i + 1: v for i, v in enumerate(INSTRUCTIONS.values())},
-        )}
-        {move(3 - 2)}
+    {log('\nexecuting\n')}
+    >>->[(
+        (t 0 @X 1)
+        {EXECUTE}
+        (t 0 @X 0 Y 1)
+        >>
     )]
 
 """

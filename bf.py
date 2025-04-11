@@ -11,11 +11,13 @@ def dbg(text: str):
     return f"\n{{DEBUG}} ({text}) {{/DEBUG}}\n" if Options.DEBUG else ""
 
 
-def log(text: str, preserve: bool = True, starting_val: int = 0):
+def log(text: str, pos: int = 0, preserve: bool = True, starting_val: int = 0):
     return dbg(
         f"""
-            log
-           {puts(text, preserve, starting_val)}
+            log {bf_escape(text)}
+            {move(pos)}
+            {puts(text, preserve, starting_val)}
+            {move(-pos)}
        """
     )
 
@@ -23,14 +25,16 @@ def log(text: str, preserve: bool = True, starting_val: int = 0):
 BF = "[]+-,.<>"
 # BF_RE = "".join(f"\\{c}" for c in BF)
 BF_NAMES = {
-    "[": "OPEN",
-    "]": "CLOSE",
-    "+": "INC",
-    "-": "DEC",
-    ",": "IN",
-    ".": "OUT",
-    "<": "LEFT",
-    ">": "RIGHT",
+    ord("["): "{OPEN}",
+    ord("]"): "{CLOSE}",
+    ord("+"): "{PLUS}",
+    ord("-"): "{MINUS}",
+    ord(","): "{COMMA}",
+    ord("."): "{DOT}",
+    ord("<"): "{LEFT}",
+    ord(">"): "{RIGHT}",
+    ord("{"): "{{",
+    ord("}"): "}}",
 }
 
 
@@ -66,13 +70,17 @@ def _char_or_int(val: str | int):
     raise "non integer value passed to _int converter"
 
 
-def bf_escape(num: int) -> str:
+def bf_escape(text: str) -> str:
+    return repr(text.translate(BF_NAMES))
+
+
+def bf_escape_num(num: int) -> str:
     return str(num).replace("-", "~")
 
 
 def bf_escape_chr(num: int) -> str:
-    out = bf_escape(num)
-    out += BF_NAMES.get(chr(num), bf_escape(repr(chr(num))))
+    out = bf_escape_num(num)
+    out += BF_NAMES.get(num, bf_escape_num(repr(chr(num))))
     return out
 
 
@@ -128,7 +136,7 @@ def clone_to(*args) -> str:
     for target_pos, target_factor in args:
         out += move(target_pos - current_pos)
         out += add(target_factor)
-        out += f" *{bf_escape(target_factor)}\n"
+        out += f" *{bf_escape_num(target_factor)}\n"
         current_pos = target_pos
     out += move(0 - current_pos) + "\n"
     return out + ") ]"
@@ -328,7 +336,7 @@ def switch_consume(
     r = move(posFlag)
     l = move(-posFlag)
 
-    out = f"{r}+{l} switch @0 with @{bf_escape(posFlag)} as scratch"
+    out = f"{r}+{l} switch @0 with @{bf_escape_num(posFlag)} as scratch"
 
     items = sorted((_char_or_int(k), v) for k, v in cases.items())
 
@@ -368,15 +376,15 @@ def switch_preserve_rl(
     desc:
         non-consuming switch case.
 
-    before: (t 0 @X 0)
+    before: (t ? @X ?)
     default:
-        before: (t 0 @X 0)
+        before: (? ? @X ?)
         {default}
-        after:  (t 0 @X 0)
+        after:  (? 0 @X 0)
     case X:
-        before: (@t 0 0 0)
+        before: (t ? @0 ?)
         {case}
-        after:  (@t 0 0 0)
+        after:  (t 0 @0 0)
     after:  (t 0 @X 0)
     """
     assert len(cases) > 0
@@ -386,7 +394,7 @@ def switch_preserve_rl(
     r = move(posZeroR)
     l = move(-posZeroR)
 
-    out = f"switch preserving @0: @{bf_escape(posZeroL)} and @{bf_escape(posZeroR)} assumed zero; @{bf_escape(posTrueL)} assumed nonzero"
+    out = f"switch preserving @0: @{bf_escape_num(posZeroL)} and @{bf_escape_num(posZeroR)} assumed zero; @{bf_escape_num(posTrueL)} assumed nonzero"
 
     items = sorted((_char_or_int(k), v) for k, v in cases.items())
     deltas = []
