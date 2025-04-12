@@ -6,6 +6,7 @@ import math
 class Options:
     DEBUG = True
     MINIFY = False
+    INDENT = "    "
 
 
 def dbg(text: str):
@@ -296,7 +297,7 @@ def switch_map(
     cur_k, cur_v = 0, 0
     for k, v in items:
         out += f"""
-            {add(v - cur_v, pos)}{add(cur_k - k)}[ case {bf_escape_chr(k)} = {bf_escape_chr(v)}
+            {add(cur_k - k)}{add(v - cur_v, pos)}[ case {bf_escape_chr(k)} = {bf_escape_chr(v)}
         """
         cur_k, cur_v = k, v
 
@@ -304,13 +305,17 @@ def switch_map(
         default = cur_v
     if isinstance(default, int):
         default = f"""
-            default (
-                {add(-cur_v, pos)}
-                [-]
-            )
+            [-]
+            {add(-cur_v, pos)}
         """
 
-    return out + default + "]" * len(items)
+    return f"""
+        switch @0 output @{bf_escape_num(pos)} (
+            {out}
+        ) default (
+            {default}
+        ) {"]" * len(items)}
+    """
 
 
 def switch_consume(
@@ -427,7 +432,7 @@ def switch_preserve_rl(
     return out
 
 
-def bf_format(text: str, indent: str = "    ") -> str:
+def bf_format(text: str) -> str:
     """
     formats code based on parentheses
     """
@@ -453,7 +458,7 @@ def bf_format(text: str, indent: str = "    ") -> str:
             continue
         if empty_line:
             space_buf = 0
-            out += indent * depth
+            out += Options.INDENT * depth
             empty_line = False
         else:
             out += " " * space_buf

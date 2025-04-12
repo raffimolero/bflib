@@ -1,6 +1,7 @@
 from bf import *
 
 Options.DEBUG = False
+# Options.INDENT = "  "
 Options.MINIFY = True
 
 res = f"""
@@ -165,7 +166,7 @@ res = f"""
         {switch_map(
             -1,
             ENCODING,
-            '[[-]<]',
+            '<--<',
         )}
         <
     )]
